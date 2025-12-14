@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTML Encryptor — Final</title>
+<title>HTML Encryptor — No Password</title>
 
 <style>
 :root{
@@ -52,7 +52,7 @@ label{
   display:block;
 }
 
-textarea,input,button{
+textarea,button{
   width:100%;
   margin-top:6px;
   padding:12px;
@@ -64,17 +64,20 @@ textarea,input,button{
   font-size:14px;
 }
 
-textarea{
-  min-height:160px;
-  resize:vertical;
-}
+textarea{min-height:160px;resize:vertical}
 
 button{
-  margin-top:14px;
+  margin-top:12px;
   background:linear-gradient(135deg,#1e40af,#3b82f6);
   border:none;
   font-weight:bold;
   cursor:pointer;
+}
+
+.copy{
+  background:#020617;
+  border:1px dashed var(--border);
+  color:var(--muted);
 }
 
 button:active{transform:scale(.97)}
@@ -93,13 +96,11 @@ button:active{transform:scale(.97)}
   <label>HTML FULL</label>
   <textarea id="html" placeholder="<!DOCTYPE html> ..."></textarea>
 
-  <label>PASSWORD</label>
-  <input id="pwd" type="password" placeholder="Password kuat">
-
   <button onclick="build()">ENCRYPT HTML</button>
 
   <label>HASIL (SIAP DIPAKAI)</label>
-  <textarea id="out" placeholder="Copy hasil ini ke file target"></textarea>
+  <textarea id="out"></textarea>
+  <button class="copy" onclick="copyOut()">COPY HASIL</button>
 </div>
 
 <script>
@@ -107,8 +108,13 @@ const E=new TextEncoder(),D=new TextDecoder();
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const ub64=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
 
-async function key(p,s){
- const m=await crypto.subtle.importKey("raw",E.encode(p),"PBKDF2",false,["deriveKey"]);
+// key statis, dipecah biar gak keliatan tolol
+const CORE_KEY=["L","e","n","z","D","e","v","-","H","T","M","L"].join("");
+
+async function key(s){
+ const m=await crypto.subtle.importKey(
+  "raw",E.encode(CORE_KEY),"PBKDF2",false,["deriveKey"]
+ );
  return crypto.subtle.deriveKey(
   {name:"PBKDF2",salt:s,iterations:120000,hash:"SHA-256"},
   m,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]
@@ -117,13 +123,15 @@ async function key(p,s){
 
 async function build(){
  const html=document.getElementById("html").value;
- const pass=document.getElementById("pwd").value;
- if(!html||!pass) return alert("Lengkapi dulu");
+ if(!html) return alert("HTML kosong");
 
  const s=crypto.getRandomValues(new Uint8Array(16));
  const i=crypto.getRandomValues(new Uint8Array(12));
- const k=await key(pass,s);
- const c=await crypto.subtle.encrypt({name:"AES-GCM",iv:i},k,E.encode(html));
+ const k=await key(s);
+ const c=await crypto.subtle.encrypt(
+  {name:"AES-GCM",iv:i},k,E.encode(html)
+ );
+
  const payload=btoa(JSON.stringify({s:b64(s),i:b64(i),d:b64(c)}));
 
  const loader=`<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -134,9 +142,11 @@ async function build(){
 const P="${payload}";
 const e=new TextEncoder(),d=new TextDecoder();
 const u=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-const pass="${pass}";
+const KEY="${CORE_KEY}";
 const o=JSON.parse(atob(P));
-const m=await crypto.subtle.importKey("raw",e.encode(pass),"PBKDF2",false,["deriveKey"]);
+const m=await crypto.subtle.importKey(
+ "raw",e.encode(KEY),"PBKDF2",false,["deriveKey"]
+);
 const k=await crypto.subtle.deriveKey(
  {name:"PBKDF2",salt:u(o.s),iterations:120000,hash:"SHA-256"},
  m,{name:"AES-GCM",length:256},false,["decrypt"]
@@ -145,13 +155,21 @@ const r=await crypto.subtle.decrypt(
  {name:"AES-GCM",iv:u(o.i)},k,u(o.d)
 );
 document.open();document.write(d.decode(r));document.close();
-}catch{document.body.innerHTML="<h2 style=color:white>DECRYPT FAIL</h2>"}};
+}catch{document.body.innerHTML="<h2 style=color:white>LOAD FAIL</h2>"}};
 run();
 })();
 <\/script>
 </body></html>`;
 
  document.getElementById("out").value=loader;
+}
+
+function copyOut(){
+ const t=document.getElementById("out");
+ if(!t.value) return;
+ t.select();
+ t.setSelectionRange(0,999999);
+ navigator.clipboard?.writeText(t.value) || document.execCommand("copy");
 }
 </script>
 </body>
