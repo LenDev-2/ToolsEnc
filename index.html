@@ -1,148 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTML Encryptor — No Password</title>
-
-<style>
-:root{
-  --bg:#0b1220;
-  --card:#111827;
-  --border:#1f2937;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --blue:#3b82f6;
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  min-height:100vh;
-  background:linear-gradient(180deg,#0b1220,#020617);
-  font-family:monospace;
-  color:var(--text);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:14px;
-}
-
-.card{
-  width:100%;
-  max-width:640px;
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:18px;
-}
-
-h3{
-  margin:0 0 10px;
-  text-align:center;
-  color:#dbeafe;
-  font-size:18px;
-}
-
-label{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:10px;
-  display:block;
-}
-
-textarea,button{
-  width:100%;
-  margin-top:6px;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:#020617;
-  color:var(--text);
-  font-family:monospace;
-  font-size:14px;
-}
-
-textarea{min-height:160px;resize:vertical}
-
-button{
-  margin-top:12px;
-  background:linear-gradient(135deg,#1e40af,#3b82f6);
-  border:none;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.copy{
-  background:#020617;
-  border:1px dashed var(--border);
-  color:var(--muted);
-}
-
-button:active{transform:scale(.97)}
-
-@media(max-width:480px){
-  textarea{min-height:140px}
-  h3{font-size:16px}
-}
-</style>
-</head>
-
-<body>
-<div class="card">
-  <h3>🧠 HTML Encryptor · LenDev-2</h3>
-
-  <label>HTML FULL</label>
-  <textarea id="html" placeholder="<!DOCTYPE html> ..."></textarea>
-
-  <button onclick="build()">🔐 ENCRYPT HTML</button>
-
-  <label>HASIL (SIAP DIPAKAI)</label>
-  <textarea id="out"></textarea>
-  <button class="copy" onclick="copyOut()">COPY HASIL</button>
-</div>
-
-<script>
-const E=new TextEncoder(),D=new TextDecoder();
-const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
-const ub64=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-
-// key statis, dipecah biar gak keliatan tolol
-const CORE_KEY=["L","e","n","z","D","e","v","-","H","T","M","L"].join("");
-
-async function key(s){
- const m=await crypto.subtle.importKey(
-  "raw",E.encode(CORE_KEY),"PBKDF2",false,["deriveKey"]
- );
- return crypto.subtle.deriveKey(
-  {name:"PBKDF2",salt:s,iterations:120000,hash:"SHA-256"},
-  m,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]
- );
-}
-
-async function build(){
- const html=document.getElementById("html").value;
- if(!html) return alert("HTML kosong");
-
- const s=crypto.getRandomValues(new Uint8Array(16));
- const i=crypto.getRandomValues(new Uint8Array(12));
- const k=await key(s);
- const c=await crypto.subtle.encrypt(
-  {name:"AES-GCM",iv:i},k,E.encode(html)
- );
-
- const payload=btoa(JSON.stringify({s:b64(s),i:b64(i),d:b64(c)}));
-
- const loader=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Loading...</title></head><body>
 <script>
 (()=>{const run=async()=>{try{
-const P="${payload}";
+const P="eyJzIjoiQU43U20veGViZkI4M29vMDFvY3Bodz09IiwiaSI6IkozanRLY3ZzcE9mZXBPQzYiLCJkIjoiUm92Z0pOVXlWWmpRVitQc1AxTVU0Yi9BdDNMM21LVG43UTRBWHVFRWViOExzamR6azNHNUdFelNWbFZHRWR6WUU0RFZDNDJheEhsSlR0NG91RVc1TjdaTjg0dGpvSC9PN3BvNm1maGdmejIvR3E0MnBBenN0U0pOVlAzcURjV3Q0emdINWQwTm05aUZnanFjSmI3OFVBUlppM0hEdWpzdzB0SmE0MFJFS2Z3OEI3R0F2NDJ3MlMvZitwT3pyS2ZoM3lCakR0R1RJdmozRFlRckNCUmRZMUdwMkZYRHFLYmsrbURvME5ReC83eHVRUk0yWVlBdFp6T05ETnlzODJNSFdRN3cvK1lRd0UzL2YveXZORytLeTlsNEswZW8rNDJybzJ1SHgvUkZmRkJ1eXo5d2JYdkcrY0cra3Z5N1ZINWFJNWJ2c3ZyMGhMRGxDK0gzZ1ZrbFRZVHlVRGhIZU5ObnlVOTh0cFhnUlVQVUdlTFQwQk92eVc4dUMwSXpGeEcwbGlQVUFGNGx4SENpR1NIblhsMEdDQmpER3FkQ3ByMkYxUEcvWm52Z2pFZUZvdmgyRmRjMFdDMjgydS9Rc2VJM0llUE1Fc3dreHpaRWtwSDNZdzN0a2VoQlRkcDBURC9PcjFZRC9LTS96OEJmSDdNV0dXUm8zSFhLWlZ1NElVYTZmK2FxbGQyVGxkMThHVmUxcnBWM2pzM05kT094RXZCMWdER0U4blJZQzBHSlRWYlN5bnpZanI1SHdyM3lSL0ZVS0xyVlBmcnBNY2srbklVcUNwNTZxSVQ5TEU2Ui9MNFluM2FTdDFwZTdyaVB5aWg1YytuTy9USFBndWQrR1dKQ041SGlOcWlZT0d1L2xzNURqeWIwZEw5RkxBcS9ldGsxSmphckVpZzBpMW5XWmRmTjFCaTV6YjRwdnR2Rm10SnkxQ3l3MlJObUwxU0lBNzFQaVRvUGw1a2t1b0ZFYnJJNWM2SFd0QUg4ZDJpWmdaUW81K09JMXAxNFU0bDNJN3dhV0loRjFqYnNmODRxODRUMWxqVFJ0c0xCcUZwMlAxRHZRK05wVlZpNlFLa2VqdVBRbC9WMGtvRnRLVCtOakdueXBCdnZXWkdkRUtYUUUvdW1ta1E5U21TVGxpL05NYzFjOVlsTlkxL0FRRmlCVzhhaXZPQ254MkNFWDgyMEZXeEliSTdUdk45T3JWK3FaVEFBKyt5enM0aFdvWHZLalJXQU9WTjVtVlVPQ0c3ZEZiNldGNjdiZEFpaGE5YUdXc1U5YWtnb3hQbGZiaUtkQml3cWM3alkvdnNsTjFMTzhLQngyYkpUVU92RkJid3pnN0VXb2RzUCt0RCt4a0dCallaOWFDeXgrcGxxZi9BRWlYektKM2ZXY05lb2hTM0FDWWhMRytKU1lWQiswTWdoYm1rSEQrdDBRZEpCaTNBWVRHbCtRZThBRVVaOVovSHEwQnRZb21laVhyUkl5ZmhScU4rSzF3a0pzbEJjUXNRTyt1U2tQSXEwelliUHdIVUx1cFZKeFl3S0hQZmJKOE13UkNtTEJ5NlljZUp5NWtEbVBLS3B0WFg2Yk5PSDE0SHUxODZxeWpqbHdYUm8xVTFMVC85WnVtSkdrVVlmalplU0QxY3hwWVdWNlkwRzh4cEo3WmRKK0lPRzk3K3Q5c3oxUTFSTTJMa0k1d1RDN2gxcnQrejY1Y1pCdVYybThKNllWQkxBalp2T3F6TTBYMFJVcFpVZGNnYTlTcmp0MURlaDFQcjQwTlp6bEdwSk1FWFJlbWJCbGZqNEZpS1VPMW41eUo1NlRSRC9ITW4vbSt2eWh3L3BuWUYzSDdDNGQyVjM1RUJtLzZHaWpnelczaUpNZ2luS3VPRGdkbFVaeG1kTE5HZXUwTjJEOTkraUZhN0dDS2NJMUZodEpLR2VOalZ6NDFxakZxNVB1RmlpdHRST2g5TC9VTTBFd0J0NWlQOHVhSWgzT1RRalcrcDB4a1lhT0pITGtZV09IR0dNZk40ZTdxcXpoNzMrdjJlcHc2d0JwNXZOMm5TRTIwdjUyUXZFZXZQN0JyNHFWT1hSdkRGMVBLd0c2Q05BWmRITHBDdiszRExOcDY2OS9UV0wyNG1ldkZpaG82bm9sMDluM1owQ1BxWkMwNWYwbFRBNXlzZzhoQlN2a3RVQUFOYVFBV1d3Rkp6WUphYmw5ZnI5TkkxS3VtVDVWRnorL0FBY2ExTWFwY0U2NGpFREZHVmVFOFJhcUIrUU9hSWpGU0V1ZGdSNHFOcU5CUGhGQStKc29LclQzYTllc0tZWEZKVjRiL0M0eGlTSHBJYU5NU0JDZ1M1WHRVWVljRTFrdEE5RVViT1QrRi9xQTkvazlnWitqZm53SGxkdk0zWVJjWTJPTzhLdTE3M0Rmekg3MTV0ZVYvZjZsODM4OEhrdVREeG5lSlU5VFZ2ZHN4ZjJKUTlML2RDQVR0SFBlUzV1NHVxM0NpYmhqWkxuU0U5aEtrS2JFeUJid0pTMlh4NFgxckFMWW5BdWpwZzBvVXkzM25MZS9iRitySFhISkNXcTcxb3NEb2grUDdhMURlMGlxQkNtYkJlMjJtK2xFMkQwOXpOVmwrcDVqcjJ4emF6cGx4S0hNeXh3NjRhM2cxUVJJa3Y2eVhSVStQNkdabGJtUndZVjdkQUpqcHRtTGxMZTN1RGovTmNJSGNISW05VWIzb2lOS0FEZ1hwZDAzRVU4L0J0Z0UrNUlBYVNKZjdPbGdEUVB4M1YzNFJHNFFLOXdvSFNORFd1RmhIa1dmUHJ2WVFrZDhkNWNWMVVCZW1CNyt4a0dMN1M3WDZOWjlYamNRK2N3aU9Kd05pY1czYU1pWGR0YnJhSU0ydGJHeDEvRGRHSHBTSm95dWxsMlMvRUF3MjI2dkYwZXZhTCsrcmFzWklHRmRILzgxbDhDd3U4L3ZwODk0Q2NidTdkS3hkVWgxajMwU2x6bG5aK2tjMnYvenF3TFJLaHU3UXhOa3dCQzEwNU9vb1pjNDhLdmRyUWNmQ1BhRTlQcGprN0Q0WGRDcG4yUlFjKzk5TEx5TzFKQ0lwZDBvRVVucE9EQ21MMzFvNy9IVlNaZU90V2t2dk54SnhxYmIvKzh1dnpLOTNBQm54cndGYUVpVEFtTnlmM0ROUHI2QXdWbkpiKzFWUlJpekUwQWdHcEVlTDgrbUZqUkpzQjhmSlJOcGhnWjdEOWlrRUpocDdwYXVIeThTRG15ejhZWjR5NXBsTGNOOXBjSWNnczEraktMMFkwZkxVNExpWjhpVDYrVzROV25QWmVnMEhQa053Y1hoSXRxajhkSjAvbDNITzRJcUZmVXlWNitqc2Z1eHYwWEtZNVQwMGZLYUk2cWQya1IzM1YrQnUyRytJb3pwaEFoZXJ3N0tOTlJ6MDV3Rm1ZN0t5eTVCelpybEd1NVM2U3hsL1REampTVlRSSnljeTJHelFCTVpTY0hTSDRPcDN2eHNjZ05uTjNzT09QeWtZUVE2NHFiR2xxSUVHSU1hMVl1d0hqbVlZdm9remJtN3J4eldudFBXUXk0TU5xazdneDJxN3lQOWIxVXJhWk1RRk5uclp1aHZHMnlHWENBT3d3dEROYzFqemw1TmpMU0VxYWYrWE5RNW12bUhhYklBMEN4RUYvYUZINVptc0JsSWNEeEYzajdyYXV5SDNUWDBnMGxtMzFPdWtzdmh6KzJSSGp0eld2U2lJZ0tSOTBmbVVxNFg2TkNTVTJUTEFpRDlzNnNGL21UbXFHb29kbi9xYU9USWtJV0R0QkxVWDNwbzUwWDR4U1crUHpyU3RtaUtMUkFGbmNVdEJHc0lNL0h6QkZqak9odWdpQ2tTUFFJY0Zjc21OS3UvQkViam1RNS9NdXJ1cnJZZmZNcVA3cDZ1a1VXTExOWEY1dGpucmsxdmtxemJnSjhmYWUvLzVKUmV0T2NjUStKQ2Rwc2VuL0JEN1BzVm5vNDRMQTdJRWdWL0wrc212dld2cWM0TytCbThPa2RZb3F4MUp4SHB2V0hCN1hGT2VvQmNIR3o1eXlpUGU1SXpOR2FzU0xUYjRvaVJMaU9SS2dDRWt6U1hKUFd2a0xBUk9yUDdJVHA1QTdObmtBZDZRWG9VTkw5NFV6UjBxbW52VTZhdFppdk9lSEtCRFRDYU0zVWNqVFZ0OG9NUVVWMTRJOWk0S01JU3JnaWxmZ3pxeVBpTlVjclRuL1B4b2wxdThOd3grN1k0RXZheFR4Rk1lZWZKL2tEa1F1ODV2MzhGYmJEUDlGMm1kOWxWK2Y5Y2ZnSzZvUXgxYnBBN2ZPOFVvQWVRUUQwNUxLcVVQUG9MaWhocWJCMi80N3o1TGYvR3QvbDRHTGM3SE9RMXZtdDdwTnlicE1aeTBIWW1VVnI0V01MNForYlF0bGJQa3NOa3IvYXZNOGhtdnVuVUY3Uk1BUXpCUUJHSHRCRHVCWTNqVy9RcDN5SnQyV3RYcXoveTBvV0Jlc0g0Rloybk11TmE2Q0VHM05KQmo5OS9WSDdYMUwwejl4aVQ1UW16aEhMYjlYZ2prbEEzS3kzem95UExZVWUrMlNCTTk1eUlrS2NDK3NGZEFvSXZSNDlISzlWeVp1ZDZmVkpvM3lwSUlzTXREQ2U0blFreWlhZkNmand5UGE2d24xVDladFBCbDJwV3hubXJ5TW9WMW52UjRHWnF3ejBnWENmaVZZN2ZVaTVFYjlhNkF3ZStrRVYyM3BjcGRpdWFtdms3OGF4cUd6Q0hUUDJLckYySUo3ck1ka05QZmdmMks0UmRzY3dEdVJSNCt4bjRDQ1p2Q2d4QWYrZkZqaTl1L0dRVkh0QWN0eHMyOHNCVHMrclBsWnM4dHZDL3hnQ0RwVUNMa2l6bUlZSUNrcjk1bE1BdzlZM0NZMUVhdFQrR0hiL0dISzl1VVFCa0pSZVNnZG1VZGlhdGx2cVpDbnBTdmh1ZWlZaVdNWHJjdE1kUWZNbHVzWWsyNWQ4QlNSU0h6TnJwdXAvc0tVdDE5bXVsRGJyUER2V2NMaU1ObVFtOUpFcFI5Z3BIaTlqbVo3SFNxTWF2WXp1OFdZVUhiRE1PbnppbXhEdTI1M0F2NCt5Z2JJdWRjWFFSMWVFRlUxQW5ianlaVzZPcVhxR2R1bUlWZi9GZFFLb2U2M1BZYnRINlpNWUxXS0l1MmhHNW05dmpkb2x3TDl5Z0ttN3I3N3czSjk4aXlvcnB6OTR2ZmFjNnZVUHRrd3BZVXhMK3VmNEc1bEJrR05LSmd6MjhVL2Q2bTQzd1RBb3p2YkFQY0l2bk1ZOEZCaFFVNUJyZFRHTmJkTStXM0tEaUFiREhuQ2ZPTndrWWk3UmhpWGJ3TXBiWU9xSnkyR1pUVm9YQUNNa0lLdmE1TnhaTEk4aWg1cjErdzl0MXovdW9lVjdSSFRYY0RnN3NwUEtWQWFRSnJQWDJsTjEzNHNreTJrVGV1eWtBdGZ2bDUybVM2R0xUeDZsYUV4aFZYNHA2Q24ycGU3a0NOajJnZUI5UzYvbzdsZ29SNXFpSGtLNlpIc1NadUsvQjFlaGl5eUs1bTJpY2ZYeEtmeWlxQWFjMmU4bXAySXRQUmF4Yk4zR1g1UkxreHlpQ0pPdjF3ZkVwVjFjaEIzU3BBbyswb2ErSXZaZnpPNlV3WktNTTdnQmRIQ1dpSm5nWWxoRUlnWU9WcXI2OU82SnNCaHAxZ3pJUVdyQXhqOFFIRzBNejBZUDd0dkxXM1p4Q1NJa2ZJWnBPRDRyYjZGUGR4ZUJTN0hwOGNmckh2WnpxTytYY1c4M1Z6eUVZalBDZHRZcE85VHVaM09nM3E0NnlRUFVMem0vWjk4ekFtM1FpNU1lMGRscXczZzc3dHdCaHNUNlhLR0JQN2thVWtOdDBhZGtWMFBXZWI0aHhYajU1eDFtWTREQk9iZ2ZnWjBodEhTWUlFQUwzb3lTbTRuN1VEYTRrM3pYUUhwNU0wbnd4emwwOWlDUXYyb2liT1c5aGhObG01c1MrR0ZaNDlsVWJLbUJCV09DdnBibVp4YVd5SmowZGI4Qldua255bFI2Zjc2VncxVVdmSnByRWdIM3ExMSsvSVZCbWdNY2EzZEsyVjZ1dzlGbVNES05BM2haTXZhZG1GOXhKeThqNGZaQXpHQ2JpSHJzaTJoazBXcXFtSHg0L0Z6enlldCtFbnFtQWFmTTRrN3RRV1RiVGowMnFCZnRSZHQvZDlLc3BFYW9Qd0QySnlwTjUraEMvZVZVMjFFZ21FaGJjSStWbnRDUUhJQ3hxYkRZbERXQlRHTk0wUWduY2duQjVLdEFFcVFqbUU3U3pOeXJwRjM4SUQ4L0RiYlJRR0toU0ZPVE5xbjBzODJVakp0ejE1MjJUaThXRWo3L1YrcFFXY3E1RE94WWNxSzBpT3ZueDZRMWZuMjZEa09QQjhKdi9PaFJIN0RQMVhkbzdLV3VKeDRSTFRLNlMvaXZONy94U1VoSWNRN2tSTlJ5K2dwVGQ3N2RXQllLU3JzajVVdVNYV0hjdTJDeW9lUFVFeXZCQlA2d2w2R1lvTUR0RmxlclJJZERHMFJNb2hBdXVCNG5tTWY3azk4K1ZYaHRWZ2U0SFJMWU80dzlHaC9nZ29iRk1lUGZoUTVqemMycXVWQVJ4Z2JuRmV4YWQxRFBmdisvNkMvOW9uUmhTUEhuLzlKcmRXeTF2NWRpbHozVm40Z0NBZFRKakhCSlcyanZjSTRkaXF2RUdEVFc4NVdHb0dsUVloaFBYZUJCU0ltR1JCZjd5TWk4RUJLK014RWVOcWRBN09ZUlFnaTRjWTJkK3dBc2xCZkp6Zjg4Z1hXR1NsWUVkUTBib0cwRDV4by8rRFN2NEVLMVp5akFHSmxJWGdsZnJjUHpvdGtuU0kyYlBkdmFoS01lRVBtOGlxemVONE9zaWsvd1pPLzZlWEo4bE9Wa0lNdVRKSDBYTFhNQW1sR2xaUnBkSmNXTzRqaTA4cEFtSzA1MVZIY2dEZHdBMGZZdXBva0I1VEdTK21Yb0dBdU13cDNXQTRZNjhvQWxyVXBmU3Z2cmxLK3lDVitTYVFUSG0yY0FMVTB4R0R0Y3NVTE0ifQ==";
 const e=new TextEncoder(),d=new TextDecoder();
 const u=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-const KEY="${CORE_KEY}";
+const KEY="LenzDev-HTML";
 const o=JSON.parse(atob(P));
 const m=await crypto.subtle.importKey(
  "raw",e.encode(KEY),"PBKDF2",false,["deriveKey"]
@@ -158,19 +22,5 @@ document.open();document.write(d.decode(r));document.close();
 }catch{document.body.innerHTML="<h2 style=color:white>LOAD FAIL</h2>"}};
 run();
 })();
-<\/script>
-</body></html>`;
-
- document.getElementById("out").value=loader;
-}
-
-function copyOut(){
- const t=document.getElementById("out");
- if(!t.value) return;
- t.select();
- t.setSelectionRange(0,999999);
- navigator.clipboard?.writeText(t.value) || document.execCommand("copy");
-}
 </script>
-</body>
-</html>
+</body></html>
